@@ -1,7 +1,7 @@
 # Packages ----
 
 # Set the package names to read in
-packages <- c("tidyverse", "fredr", "openxlsx", "lubridate", "xts", "blsAPI")
+packages <- c("tidyverse", "fredr", "openxlsx", "lubridate", "xts", "blsAPI", "sf", "rjson", "arcgisbinding")
 
 # Install packages that are not yet installed
 installed_packages <- packages %in% rownames(installed.packages())
@@ -70,7 +70,7 @@ payload <- list(
 response_json <- blsAPI(payload, 2)
 
 # Parse JSON without flattening lists
-json_data <- fromJSON(response_json, simplifyDataFrame = FALSE)
+json_data <- fromJSON(response_json)
 
 # Extract series list
 series_list <- json_data$Results$series
@@ -159,12 +159,12 @@ clean_df <- clean_df %>%
 
 # Output data ----
 
-write.xlsx(data_final, output_file_path)
+write.xlsx(clean_df, output_file_path)
 
 arc.check_product()
 
 clean_df <- clean_df %>%
-  left_join(combined_shapefile, by = 'geo_name')
+  left_join(combined_shapefile, by = 'geo_name') %>%
+  st_as_sf()
 
-clean_df <- st_as_sf(clean_df)
-arc.write(data_final, output_file_path_shape_file, overwrite = T, validate = T)
+arc.write(clean_df, path = output_file_path_shape_file, overwrite = T, validate = T)
